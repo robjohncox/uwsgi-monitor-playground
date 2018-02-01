@@ -1,0 +1,22 @@
+---
+- hosts: all
+
+  tasks:
+    - name: "ensure web server packages are installed"
+      apt:
+        name: "{{item}}"
+        state: latest
+        update_cache: yes
+      with_items:
+        - nginx
+        - uwsgi
+        - uwsgi-plugin-python
+
+    - name: "ensure default configuration files absent"
+      file:
+        path: "{{item}}"
+        state: absent
+      with_items:
+        - /etc/nginx/sites-available/default
+        - /etc/nginx/sites-enabled/default
+...
