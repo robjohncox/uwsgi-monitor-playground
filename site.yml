@@ -3,10 +3,19 @@
 
   roles:
     - williamyeh.prometheus
+    - ansiblebit.grafana
 
   vars:
     prometheus_components:
       - prometheus
+    # TODO Proper admin username and password
+    grafana_admin_password: "password"
+    # TODO Work out best place for these directories
+    grafana_dir_conf: /etc/grafana
+    grafana_dir_data: /var/lib/grafana
+    grafana_dir_home: /home/grafana
+    grafana_dir_log: /var/log/grafana
+    grafana_dir_plugins: /home/grafana/plugins
 
   tasks:
     - name: "ensure web server packages are installed"

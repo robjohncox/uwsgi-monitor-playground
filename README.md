@@ -15,3 +15,12 @@ To view the raw Prometheus interface go to
 
     http://localhost:9090
 
+To view the Grafana dashboard
+
+    http://localhost:3000
+
+The credentials are
+
+    username: admin
+    password: password
+
