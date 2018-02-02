@@ -1,3 +1,7 @@
+# This is a prototype and it has shortcomings
+#  - Do not re-install prometheus if it already exists
+#  - Needs proper Grafana authentication (proper password not stored as plaintext)
+
 ---
 - hosts: all
 
@@ -8,9 +12,7 @@
   vars:
     prometheus_components:
       - prometheus
-    # TODO Proper admin username and password
     grafana_admin_password: "password"
-    # TODO Work out best place for these directories
     grafana_dir_conf: /etc/grafana
     grafana_dir_data: /var/lib/grafana
     grafana_dir_home: /var/lib/grafana/home
@@ -29,11 +31,11 @@
         - grafana_dir_log
         - grafana_dir_plugins
 
-    # Installing Prometheus datasource, taken from https://github.com/grafana/grafana/issues/1789
+    # Installing Prometheus data source, taken from https://github.com/grafana/grafana/issues/1789
     - uri:
         url: http://localhost:3000/api/datasources/name/Prometheus
-        user: admin
-        password: changeme
+        user: "{{grafana_admin_user}}"
+        password: "{{grafana_admin_password}}"
         force_basic_auth: yes
       register: grafana_prometheus
       failed_when: false
@@ -43,16 +45,16 @@
       uri:
         url: http://localhost:3000/api/datasources
         method: POST
-        user: admin
-        password: changeme
+        user: "{{grafana_admin_user}}"
+        password: "{{grafana_admin_password}}"
         body:
           name: "Prometheus"
           type: "prometheus"
-          url: "http://prometheus:9090"
-          access: "proxy"
+          url: "http://localhost:9090"
+          access: "direct"
           isDefault: true
         force_basic_auth: yes
-        status_code: 201
+        status_code: 200
         body_format: json
       when: grafana_prometheus.status == 404
 
