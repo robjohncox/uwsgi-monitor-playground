@@ -1,6 +1,13 @@
 ---
 - hosts: all
 
+  roles:
+    - williamyeh.prometheus
+
+  vars:
+    prometheus_components:
+      - prometheus
+
   tasks:
     - name: "ensure web server packages are installed"
       apt:
@@ -19,4 +26,57 @@
       with_items:
         - /etc/nginx/sites-available/default
         - /etc/nginx/sites-enabled/default
+
+    - name: "deploy hello world software"
+      copy:
+        src: hello_world.py
+        dest: /opt/hello_world.py
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "deploy hello world NGINX configuration"
+      copy:
+        src: hello_world.nginx.conf
+        dest: /etc/nginx/sites-available/hello_world.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - nginx reloaded
+
+    - name: "enable hello world NGINX configuration"
+      file:
+        src: /etc/nginx/sites-available/hello_world.conf
+        dest: /etc/nginx/sites-enabled/hello_world.conf
+        state: link
+        force: yes
+
+    - name: "deploy hello world UWSGI configuration"
+      copy:
+        src: hello_world.uwsgi.ini
+        dest: /etc/uwsgi/apps-available/hello_world.ini
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - uwsgi reloaded
+
+    - name: "enable hello world UWSGI configuration"
+      file:
+        src: /etc/uwsgi/apps-available/hello_world.ini
+        dest: /etc/uwsgi/apps-enabled/hello_world.ini
+        state: link
+        force: yes
+
+  handlers:
+    - name: "nginx reloaded"
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: "uwsgi reloaded"
+      service:
+        name: uwsgi
+        state: restarted
 ...
