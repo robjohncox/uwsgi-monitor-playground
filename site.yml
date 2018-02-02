@@ -13,11 +13,49 @@
     # TODO Work out best place for these directories
     grafana_dir_conf: /etc/grafana
     grafana_dir_data: /var/lib/grafana
-    grafana_dir_home: /home/grafana
+    grafana_dir_home: /var/lib/grafana/home
     grafana_dir_log: /var/log/grafana
-    grafana_dir_plugins: /home/grafana/plugins
+    grafana_dir_plugins: /var/lib/grafana/plugins
 
   tasks:
+    - name: "remove Grafana install detritus"
+      file:
+        path: "{{item}}"
+        state: absent
+      with_items:
+        - grafana_dir_conf
+        - grafana_dir_data
+        - grafana_dir_home
+        - grafana_dir_log
+        - grafana_dir_plugins
+
+    # Installing Prometheus datasource, taken from https://github.com/grafana/grafana/issues/1789
+    - uri:
+        url: http://localhost:3000/api/datasources/name/Prometheus
+        user: admin
+        password: changeme
+        force_basic_auth: yes
+      register: grafana_prometheus
+      failed_when: false
+      changed_when: false
+
+    - name: Enable Prometheus Datasource
+      uri:
+        url: http://localhost:3000/api/datasources
+        method: POST
+        user: admin
+        password: changeme
+        body:
+          name: "Prometheus"
+          type: "prometheus"
+          url: "http://prometheus:9090"
+          access: "proxy"
+          isDefault: true
+        force_basic_auth: yes
+        status_code: 201
+        body_format: json
+      when: grafana_prometheus.status == 404
+
     - name: "ensure web server packages are installed"
       apt:
         name: "{{item}}"
