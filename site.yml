@@ -6,6 +6,7 @@
 #  - All sorts of security holes would need tightening up
 #  - Should use a database other than SQLite for Grafana
 #  - Should access each UI through reverse proxies
+#  - Configuration directories and files don't all get right owners, groups and permissions
 ---
 - hosts: all
 
@@ -16,7 +17,9 @@
   vars:
     prometheus_components:
       - prometheus
+      - alertmanager
     prometheus_conf_main: prometheus/prometheus.yml
+    prometheus_alertmanager_conf: prometheus/alertmanager.yml
     grafana_admin_password: "password"
     grafana_conf_data: |
       app_mode = development

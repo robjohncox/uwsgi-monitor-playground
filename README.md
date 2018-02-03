@@ -10,7 +10,11 @@ To see the Prometheus endpoints
 
     http://localhost:9090/targets
 
-To view the Grafana web UI (user: admin, password: password)
+To see the Alertmanager web UI go to
+
+    http://localhost:9093
+
+To view the Grafana web UI (user: admin, password: password) go to
 
     http://localhost:3000
     
