@@ -5,6 +5,7 @@
 #  - Should look at Prometheus tgroups so each metrics endpoint deploys own config
 #  - All sorts of security holes would need tightening up
 #  - Should use a database other than SQLite for Grafana
+#  - Should access each UI through reverse proxies
 ---
 - hosts: all
 
@@ -15,7 +16,7 @@
   vars:
     prometheus_components:
       - prometheus
-    prometheus_conf_main: prometheus.yml
+    prometheus_conf_main: prometheus/prometheus.yml
     grafana_admin_password: "password"
     grafana_conf_data: |
       app_mode = development
@@ -92,8 +93,8 @@
         - grafana_dir_log
         - grafana_dir_plugins
 
-    # Installing Prometheus data source, taken from https://github.com/grafana/grafana/issues/1789
-    - uri:
+    - name: "check if Prometheus data source set up"
+      uri:
         url: http://localhost:3000/api/datasources/name/Prometheus
         user: "{{grafana_admin_user}}"
         password: "{{grafana_admin_password}}"
@@ -137,45 +138,53 @@
         - /etc/nginx/sites-available/default
         - /etc/nginx/sites-enabled/default
 
-    - name: "deploy hello world software"
+    - name: "create echo UWSGI parameters software dashboards directory"
+      file:
+        dest: /opt/echo-uwsgi-parameters
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: "deploy echo UWSGI parameters software"
       copy:
-        src: hello_world.py
-        dest: /opt/hello_world.py
+        src: echo-uwsgi-parameters/app.py
+        dest: /opt/echo-uwsgi-parameters/app.py
         owner: root
         group: root
         mode: 0644
 
-    - name: "deploy hello world NGINX configuration"
+    - name: "deploy echo UWSGI parameters NGINX configuration"
       copy:
-        src: hello_world.nginx.conf
-        dest: /etc/nginx/sites-available/hello_world.conf
+        src: echo-uwsgi-parameters/nginx.conf
+        dest: /etc/nginx/sites-available/echo-uwsgi-parameters.conf
         owner: root
         group: root
         mode: 0644
       notify:
         - nginx reloaded
 
-    - name: "enable hello world NGINX configuration"
+    - name: "enable echo UWSGI parameters NGINX configuration"
       file:
-        src: /etc/nginx/sites-available/hello_world.conf
-        dest: /etc/nginx/sites-enabled/hello_world.conf
+        src: /etc/nginx/sites-available/echo-uwsgi-parameters.conf
+        dest: /etc/nginx/sites-enabled/echo-uwsgi-parameters.conf
         state: link
         force: yes
 
-    - name: "deploy hello world UWSGI configuration"
+    - name: "deploy echo UWSGI parameters UWSGI configuration"
       copy:
-        src: hello_world.uwsgi.ini
-        dest: /etc/uwsgi/apps-available/hello_world.ini
+        src: echo-uwsgi-parameters/uwsgi.ini
+        dest: /etc/uwsgi/apps-available/echo-uwsgi-parameters.ini
         owner: root
         group: root
         mode: 0644
       notify:
         - uwsgi reloaded
 
-    - name: "enable hello world UWSGI configuration"
+    - name: "enable echo UWSGI parameters UWSGI configuration"
       file:
-        src: /etc/uwsgi/apps-available/hello_world.ini
-        dest: /etc/uwsgi/apps-enabled/hello_world.ini
+        src: /etc/uwsgi/apps-available/echo-uwsgi-parameters.ini
+        dest: /etc/uwsgi/apps-enabled/echo-uwsgi-parameters.ini
         state: link
         force: yes
 
@@ -194,8 +203,8 @@
 
     - name: "deploy Prometheus metrics NGINX configuration"
       copy:
-        src: prometheus_metrics.nginx.conf
-        dest: /etc/nginx/sites-available/prometheus_metrics.conf
+        src: prometheus/metrics.nginx.conf
+        dest: /etc/nginx/sites-available/prometheus-metrics.conf
         owner: root
         group: root
         mode: 0644
@@ -204,8 +213,8 @@
 
     - name: "enable Prometheus metrics NGINX configuration"
       file:
-        src: /etc/nginx/sites-available/prometheus_metrics.conf
-        dest: /etc/nginx/sites-enabled/prometheus_metrics.conf
+        src: /etc/nginx/sites-available/prometheus-metrics.conf
+        dest: /etc/nginx/sites-enabled/prometheus-metrics.conf
         state: link
         force: yes
 
@@ -225,7 +234,7 @@
         group: grafana
         mode: 0644
       with_fileglob:
-        "grafana_*_dashboard.json"
+        "grafana/dashboards/*.json"
       notify:
         - restart grafana
 
