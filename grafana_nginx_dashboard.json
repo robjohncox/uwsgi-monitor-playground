@@ -1,14 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "Prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
   "__requires": [
     {
       "type": "panel",
@@ -54,7 +44,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "Prometheus",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -89,7 +79,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(irate(nginx_http_requests_total{role=~\"$role\",status=~\"$status\",host!=\"127.0.0.1\"}[5m])) by (status)",
+              "expr": "sum(irate(nginx_http_requests_total{status=~\"$status\"}[5m])) by (status)",
               "hide": false,
               "interval": "1000ms",
               "intervalFactor": 1,
@@ -134,7 +124,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "Prometheus",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -169,7 +159,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(irate(nginx_http_requests_total{role=~\"$role\",status=~\"$status\",host!=\"127.0.0.1\"}[5m])) by (alias,status)",
+              "expr": "sum(irate(nginx_http_requests_total{status=~\"$status\"}[5m])) by (alias,status)",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "{{status}} {{alias}}",
@@ -220,14 +210,14 @@
           "id": 7,
           "targets": [
             {
-              "expr": "(sum(rate(nginx_http_request_duration_seconds_bucket{role=\"$role\",host!=\"127.0.0.1\",le=\"0.01\"}[1m]))+sum(rate(nginx_http_request_duration_seconds_bucket{role=\"$role\",host!=\"127.0.0.1\",le=\"0.01\"}[1m]))) / 2 / sum(rate(nginx_http_request_duration_seconds_count{role=\"$role\",host!=\"127.0.0.1\"}[1m]))",
+              "expr": "(sum(rate(nginx_http_request_duration_seconds_bucket{le=\"0.01\"}[1m]))+sum(rate(nginx_http_request_duration_seconds_bucket{le=\"0.01\"}[1m]))) / 2 / sum(rate(nginx_http_request_duration_seconds_count{}[1m]))",
               "intervalFactor": 2,
               "refId": "A",
               "step": 60
             }
           ],
           "links": [],
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "Prometheus",
           "maxDataPoints": 100,
           "interval": null,
           "cacheTimeout": null,
@@ -298,7 +288,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "Prometheus",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -335,7 +325,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(nginx_http_request_duration_seconds_sum{role=\"$role\",host!=\"127.0.0.1\"}[1m])) / sum(rate(nginx_http_request_duration_seconds_count{role=\"$role\",host!=\"127.0.0.1\"}[1m]))",
+              "expr": "sum(rate(nginx_http_request_duration_seconds_sum{}[1m])) / sum(rate(nginx_http_request_duration_seconds_count{}[1m]))",
               "intervalFactor": 2,
               "legendFormat": "seconds",
               "refId": "C",
@@ -378,7 +368,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "Prometheus",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -414,7 +404,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(nginx_http_request_duration_seconds_sum{role=\"$role\",host!=\"127.0.0.1\"}[1m])) by (alias) / sum(rate(nginx_http_request_duration_seconds_count{role=\"$role\",host!=\"127.0.0.1\"}[1m])) by (alias)",
+              "expr": "sum(rate(nginx_http_request_duration_seconds_sum{}[1m])) by (alias) / sum(rate(nginx_http_request_duration_seconds_count{}[1m])) by (alias)",
               "intervalFactor": 2,
               "legendFormat": "{{alias}}",
               "refId": "A",
@@ -463,14 +453,14 @@
           "id": 8,
           "targets": [
             {
-              "expr": "count(sum(nginx_http_request_duration_seconds_count{host!=\"127.0.0.1\",role=\"$role\"}) by (alias))",
+              "expr": "count(sum(nginx_http_request_duration_seconds_count{}) by (alias))",
               "intervalFactor": 2,
               "refId": "A",
               "step": 60
             }
           ],
           "links": [],
-          "datasource": "${DS_PROMETHEUS}",
+          "datasource": "Prometheus",
           "maxDataPoints": 100,
           "interval": null,
           "cacheTimeout": null,
@@ -566,25 +556,9 @@
   "templating": {
     "list": [
       {
-        "current": {},
-        "datasource": "${DS_PROMETHEUS}",
-        "hide": 0,
-        "includeAll": false,
-        "multi": false,
-        "name": "role",
-        "options": [],
-        "query": "label_values(role)",
-        "refresh": 1,
-        "regex": "",
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
         "allValue": ".*",
         "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "datasource": "Prometheus",
         "hide": 0,
         "includeAll": true,
         "label": "response_code",

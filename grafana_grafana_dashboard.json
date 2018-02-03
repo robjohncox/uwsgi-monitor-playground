@@ -42,6 +42,7 @@
       "url": "http://prometheus.io/docs/introduction/overview/"
     }
   ],
+  "refresh": "30s",
   "revision": "1.0",
   "rows": [
     {
@@ -982,8 +983,8 @@
     "list": []
   },
   "time": {
-    "from": "now/d",
-    "to": "now/d"
+    "from": "now-1h",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1010,7 +1011,7 @@
       "30d"
     ]
   },
-  "timezone": "",
+  "timezone": "browser",
   "title": "Grafana",
   "version": 1
 }
