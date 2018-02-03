@@ -23,4 +23,15 @@ The credentials are
 
     username: admin
     password: password
+    
+The API endpoint for gathering Prometheus metrics for Prometheus:
 
+    http://localhost:9090/metrics
+    
+The API endpoint for gathering Grafana metrics for Prometheus:
+
+    http://localhost:3000/metrics
+
+The API endpoint for gathering NGINX metrics for Prometheus:
+
+    http://localhost:9145/metrics

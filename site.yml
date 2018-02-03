@@ -1,7 +1,10 @@
 # This is a prototype and it has shortcomings
 #  - Do not re-install prometheus if it already exists
 #  - Needs proper Grafana authentication (proper password not stored as plaintext)
-
+#  - Plenty of variable extraction that could occur
+#  - Should look at Prometheus tgroups so each metrics endpoint deploys own config
+#  - All sorts of security holes would need tightening up
+#  - Should use a database other than SQLite for Grafana
 ---
 - hosts: all
 
@@ -12,12 +15,70 @@
   vars:
     prometheus_components:
       - prometheus
+    prometheus_conf_main: prometheus.yml
     grafana_admin_password: "password"
-    grafana_dir_conf: /etc/grafana
-    grafana_dir_data: /var/lib/grafana
-    grafana_dir_home: /var/lib/grafana/home
-    grafana_dir_log: /var/log/grafana
-    grafana_dir_plugins: /var/lib/grafana/plugins
+    grafana_conf_data: |
+      app_mode = development
+
+      [paths]
+      data = {{ grafana_dir_data }}
+      logs = {{ grafana_dir_log }}
+      plugins = {{ grafana_dir_plugins }}
+
+      [server]
+      protocol = http
+      http_port = {{ grafana_http_port }}
+
+      [database]
+      type = {{ grafana_database.type }}
+      host = {{ grafana_database.host }}
+      name = {{ grafana_database.name }}
+      user = {{ grafana_database.user }}
+      password = {{ grafana_database.password }}
+      path = {{ grafana_database.path }}
+
+      [session]
+
+      [analytics]
+      check_for_updates = true
+
+      [security]
+      admin_user = {{ grafana_admin_user }}
+      admin_password = {{ grafana_admin_password }}
+
+      [snapshots]
+
+      [users]
+
+      [auth.anonymous]
+
+      [auth.github]
+
+      [auth.google]
+
+      [auth.proxy]
+
+      [auth.basic]
+
+      [auth.ldap]
+
+      [smtp]
+
+      [emails]
+
+      [log]
+      mode = file
+      level = Info
+
+      [log.console]
+
+      [log.file]
+
+      [event_publisher]
+
+      [dashboards.json]
+      enabled = true
+      path = /var/lib/grafana/dashboards
 
   tasks:
     - name: "remove Grafana install detritus"
@@ -41,7 +102,7 @@
       failed_when: false
       changed_when: false
 
-    - name: Enable Prometheus Datasource
+    - name: "enable Prometheus Datasource"
       uri:
         url: http://localhost:3000/api/datasources
         method: POST
@@ -51,7 +112,7 @@
           name: "Prometheus"
           type: "prometheus"
           url: "http://localhost:9090"
-          access: "direct"
+          access: "proxy"
           isDefault: true
         force_basic_auth: yes
         status_code: 200
@@ -117,6 +178,56 @@
         dest: /etc/uwsgi/apps-enabled/hello_world.ini
         state: link
         force: yes
+
+    - name: "add NGINX extras to enable Prometheus plugin"
+      apt:
+        name: "{{item}}"
+        state: latest
+        update_cache: yes
+      with_items:
+        - nginx-extras
+
+    - name: "get NGINX Prometheus metrics plugin"
+      git:
+        repo: "https://github.com/knyar/nginx-lua-prometheus.git"
+        dest: /opt/nginx-lua-prometheus
+
+    - name: "deploy Prometheus metrics NGINX configuration"
+      copy:
+        src: prometheus_metrics.nginx.conf
+        dest: /etc/nginx/sites-available/prometheus_metrics.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - nginx reloaded
+
+    - name: "enable Prometheus metrics NGINX configuration"
+      file:
+        src: /etc/nginx/sites-available/prometheus_metrics.conf
+        dest: /etc/nginx/sites-enabled/prometheus_metrics.conf
+        state: link
+        force: yes
+
+    - name: "create Grafana dashboards directory"
+      file:
+        dest: /var/lib/grafana/dashboards
+        state: directory
+        owner: grafana
+        group: grafana
+        mode: 0755
+
+    - name: "deploy Grafana dashboard configuration files"
+      copy:
+        src: "{{ item }}"
+        dest: /var/lib/grafana/dashboards/
+        owner: grafana
+        group: grafana
+        mode: 0644
+      with_fileglob:
+        "grafana_*_dashboard.json"
+      notify:
+        - restart grafana
 
   handlers:
     - name: "nginx reloaded"
