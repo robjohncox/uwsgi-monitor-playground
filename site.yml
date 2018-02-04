@@ -7,8 +7,14 @@
 #  - Should use a database other than SQLite for Grafana
 #  - Should access each UI through reverse proxies
 #  - Configuration directories and files don't all get right owners, groups and permissions
+#  - Could not install RabbitMQ stats exporter - requires Docker (may be common problem)
+
 ---
 - hosts: all
+
+  ############################################################################
+  # Prometheus & Grafana for metrics collection & display
+  ############################################################################
 
   roles:
     - williamyeh.prometheus
@@ -123,6 +129,20 @@
         body_format: json
       when: grafana_prometheus.status == 404
 
+    ############################################################################
+    # Install SW utilities
+    ############################################################################
+
+    - name: "install virtualenv"
+      apt:
+        name: python-virtualenv
+        state: latest
+        update-cache: yes
+
+    ############################################################################
+    # NGINX & UWSGI for web and application servers
+    ############################################################################
+
     - name: "ensure web server packages are installed"
       apt:
         name: "{{item}}"
@@ -141,7 +161,41 @@
         - /etc/nginx/sites-available/default
         - /etc/nginx/sites-enabled/default
 
-    - name: "create echo UWSGI parameters software dashboards directory"
+    - name: "add NGINX extras to enable Prometheus plugin"
+      apt:
+        name: "{{item}}"
+        state: latest
+        update_cache: yes
+      with_items:
+        - nginx-extras
+
+    - name: "get NGINX Prometheus metrics plugin"
+      git:
+        repo: "https://github.com/knyar/nginx-lua-prometheus.git"
+        dest: /opt/nginx-lua-prometheus
+
+    - name: "deploy Prometheus metrics NGINX configuration"
+      copy:
+        src: prometheus/metrics.nginx.conf
+        dest: /etc/nginx/sites-available/prometheus-metrics.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - nginx reloaded
+
+    - name: "enable Prometheus metrics NGINX configuration"
+      file:
+        src: /etc/nginx/sites-available/prometheus-metrics.conf
+        dest: /etc/nginx/sites-enabled/prometheus-metrics.conf
+        state: link
+        force: yes
+
+    ############################################################################
+    # Echo UWSGI parameters application
+    ############################################################################
+
+    - name: "create echo UWSGI parameters software directory"
       file:
         dest: /opt/echo-uwsgi-parameters
         state: directory
@@ -182,7 +236,7 @@
         group: root
         mode: 0644
       notify:
-        - uwsgi reloaded
+        - uwsgi restarted
 
     - name: "enable echo UWSGI parameters UWSGI configuration"
       file:
@@ -191,35 +245,114 @@
         state: link
         force: yes
 
-    - name: "add NGINX extras to enable Prometheus plugin"
+    ############################################################################
+    # RabbitMQ message server
+    ############################################################################
+
+    - name: "install RabbitMQ"
       apt:
-        name: "{{item}}"
+        name: rabbitmq-server
         state: latest
         update_cache: yes
-      with_items:
-        - nginx-extras
 
-    - name: "get NGINX Prometheus metrics plugin"
-      git:
-        repo: "https://github.com/knyar/nginx-lua-prometheus.git"
-        dest: /opt/nginx-lua-prometheus
+    - name: "configure RabbitMQ management plugin"
+      rabbitmq_plugin:
+        names: rabbitmq_management
+        state: enabled
+      notify:
+        - rabbitmq reloaded
 
-    - name: "deploy Prometheus metrics NGINX configuration"
+    - name: "create RabbitMQ admin user"
+      rabbitmq_user:
+        name: admin
+        state: present
+        password: password
+        tags: admin,monitoring
+        read_priv: ".*"
+        write_priv: ".*"
+        configure_priv: ".*"
+      notify:
+        - rabbitmq reloaded
+
+    ############################################################################
+    # Post RabbitMQ message application
+    ############################################################################
+
+    - name: "create post RabbitMQ message software directory"
+      file:
+        dest: /opt/post-rabbitmq-message
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: "copy requirements.txt to machine"
       copy:
-        src: prometheus/metrics.nginx.conf
-        dest: /etc/nginx/sites-available/prometheus-metrics.conf
+        src: post-rabbitmq-message/requirements.txt
+        dest: /opt/post-rabbitmq-message/requirements.txt
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "install post RabbitMQ virtualenv deployment tools"
+      pip:
+        name: "{{item}}"
+        state: latest
+        virtualenv: /opt/post-rabbitmq-message/venv
+      with_items:
+        - pip
+        - setuptools
+
+    - name: "install post RabbitMQ message dependencies"
+      pip:
+        requirements: /opt/post-rabbitmq-message/requirements.txt
+        virtualenv: /opt/post-rabbitmq-message/venv
+
+    - name: "deploy post RabbitMQ message software"
+      copy:
+        src: post-rabbitmq-message/app.py
+        dest: /opt/post-rabbitmq-message/app.py
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "deploy post RabbitMQ message NGINX configuration"
+      copy:
+        src: post-rabbitmq-message/nginx.conf
+        dest: /etc/nginx/sites-available/post-rabbitmq-message.conf
         owner: root
         group: root
         mode: 0644
       notify:
         - nginx reloaded
 
-    - name: "enable Prometheus metrics NGINX configuration"
+    - name: "enable post RabbitMQ message NGINX configuration"
       file:
-        src: /etc/nginx/sites-available/prometheus-metrics.conf
-        dest: /etc/nginx/sites-enabled/prometheus-metrics.conf
+        src: /etc/nginx/sites-available/post-rabbitmq-message.conf
+        dest: /etc/nginx/sites-enabled/post-rabbitmq-message.conf
         state: link
         force: yes
+
+    - name: "deploy post RabbitMQ message UWSGI configuration"
+      copy:
+        src: post-rabbitmq-message/uwsgi.ini
+        dest: /etc/uwsgi/apps-available/post-rabbitmq-message.ini
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - uwsgi restarted
+
+    - name: "enable post RabbitMQ message UWSGI configuration"
+      file:
+        src: /etc/uwsgi/apps-available/post-rabbitmq-message.ini
+        dest: /etc/uwsgi/apps-enabled/post-rabbitmq-message.ini
+        state: link
+        force: yes
+
+    ############################################################################
+    # Grafana dashboards setup
+    ############################################################################
 
     - name: "create Grafana dashboards directory"
       file:
@@ -247,8 +380,13 @@
         name: nginx
         state: reloaded
 
-    - name: "uwsgi reloaded"
+    - name: "uwsgi restarted"
       service:
         name: uwsgi
         state: restarted
+
+    - name: "rabbitmq reloaded"
+      service:
+        name: rabbitmq-server
+        state: reloaded
 ...
