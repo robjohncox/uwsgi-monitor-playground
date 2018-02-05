@@ -22,6 +22,19 @@ To view the RabbitMQ management web UI (user: admin, password: password) go to
 
     http://localhost:15672
     
-To call the __Hello World__ API (simple python script hooked into UWSGI):
+To call the __Hello World__ API:
 
     curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost:8001
+
+To call the __Post RabbitMQ Message__ API:
+
+    curl -X POST http://localhost:8002
+
+To run UWSGI-top for viewing UWSGI statistics
+
+    pip install uwsgitop
+    # Hello world app
+    uwsgitop http://localhost:3101
+    # Post RabbitMQ message app
+    uwsgitop http://localhost:3102
+    
