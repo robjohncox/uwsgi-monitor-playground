@@ -30,6 +30,10 @@ To call the __Post RabbitMQ Message__ API:
 
     curl -X POST http://localhost:8002
 
+To call the __General Process Metrics__ API:
+
+    curl -X POST http://localhost:8003/metrics
+
 To run UWSGI-top for viewing UWSGI statistics
 
     pip install uwsgitop

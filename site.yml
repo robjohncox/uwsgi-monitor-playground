@@ -300,7 +300,7 @@
         group: root
         mode: 0755
 
-    - name: "copy requirements.txt to machine"
+    - name: "copy post RabbitMQ message requirements.txt to machine"
       copy:
         src: post-rabbitmq-message/requirements.txt
         dest: /opt/post-rabbitmq-message/requirements.txt
@@ -308,7 +308,7 @@
         group: root
         mode: 0644
 
-    - name: "install post RabbitMQ virtualenv deployment tools"
+    - name: "install post RabbitMQ message virtualenv deployment tools"
       pip:
         name: "{{item}}"
         state: latest
@@ -361,6 +361,82 @@
       file:
         src: /etc/uwsgi/apps-available/post-rabbitmq-message.ini
         dest: /etc/uwsgi/apps-enabled/post-rabbitmq-message.ini
+        state: link
+        force: yes
+
+    ############################################################################
+    # general process metrics application
+    ############################################################################
+
+    - name: "create general process metrics software directory"
+      file:
+        dest: /opt/general-process-metrics
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: "copy general process metrics requirements.txt to machine"
+      copy:
+        src: general-process-metrics/requirements.txt
+        dest: /opt/general-process-metrics/requirements.txt
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "install general process metrics virtualenv deployment tools"
+      pip:
+        name: "{{item}}"
+        state: latest
+        virtualenv: /opt/general-process-metrics/venv
+      with_items:
+        - pip
+        - setuptools
+
+    - name: "install general process metrics dependencies"
+      pip:
+        requirements: /opt/general-process-metrics/requirements.txt
+        virtualenv: /opt/general-process-metrics/venv
+
+    - name: "deploy general process metrics software"
+      copy:
+        src: general-process-metrics/app.py
+        dest: /opt/general-process-metrics/app.py
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "deploy general process metrics NGINX configuration"
+      copy:
+        src: general-process-metrics/nginx.conf
+        dest: /etc/nginx/sites-available/general-process-metrics.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - nginx reloaded
+
+    - name: "enable general process metrics NGINX configuration"
+      file:
+        src: /etc/nginx/sites-available/general-process-metrics.conf
+        dest: /etc/nginx/sites-enabled/general-process-metrics.conf
+        state: link
+        force: yes
+
+    - name: "deploy general process metrics UWSGI configuration"
+      copy:
+        src: general-process-metrics/uwsgi.ini
+        dest: /etc/uwsgi/apps-available/general-process-metrics.ini
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - uwsgi restarted
+
+    - name: "enable general process metrics UWSGI configuration"
+      file:
+        src: /etc/uwsgi/apps-available/general-process-metrics.ini
+        dest: /etc/uwsgi/apps-enabled/general-process-metrics.ini
         state: link
         force: yes
 

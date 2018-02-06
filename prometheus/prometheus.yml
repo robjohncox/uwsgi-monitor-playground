@@ -25,3 +25,7 @@ scrape_configs:
   - job_name: 'nginx'
     static_configs:
       - targets: ['localhost:9145']
+
+  - job_name: 'general_process'
+    static_configs:
+      - targets: ['localhost:8003']
