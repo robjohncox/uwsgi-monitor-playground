@@ -17,6 +17,9 @@
 #  - May be old Prometheus and related SW versions
 #  - Is alertmanager callable?
 #  - Now is the time to ask the question ... what are we measuring?
+#  - These tests are on old versions, for example newer versions use yml alert rules files
+#    and the prometheus querying syntax
+#  - With the webhook, did not call API to say alert no longer firing
 
 ---
 - hosts: all
@@ -36,6 +39,7 @@
       - alertmanager
     prometheus_conf_main: prometheus/prometheus.yml
     prometheus_alertmanager_conf: prometheus/alertmanager.yml
+    prometheus_alertmanager_url: 'http://localhost:9093'
     prometheus_node_exporter_opts: '--collectors.enabled conntrack,diskstats,entropy,filefd,filesystem,hwmon,loadavg,logind,mdadm,meminfo,netdev,netstat,ntp,sockstat,stat,textfile,time,uname,vmstat --collector.ntp.server ntp.ubuntu.com'
     grafana_admin_password: "password"
     grafana_conf_data: |
@@ -102,6 +106,17 @@
       path = /var/lib/grafana/dashboards
 
   tasks:
+    - name: "deploy Prometheus alert rules"
+      copy:
+        src: "prometheus/alerts.rules"
+        dest: "{{ prometheus_rule_path }}/alerts.rules"
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - restart prometheus
+
+
     - name: "remove Grafana install detritus"
       file:
         path: "{{item}}"
@@ -224,6 +239,8 @@
         owner: root
         group: root
         mode: 0644
+      notify:
+        - uwsgi restarted
 
     - name: "deploy echo UWSGI parameters NGINX configuration"
       copy:
@@ -329,6 +346,8 @@
         owner: root
         group: root
         mode: 0644
+      notify:
+        - uwsgi restarted
 
     - name: "deploy post RabbitMQ message NGINX configuration"
       copy:
@@ -405,6 +424,8 @@
         owner: root
         group: root
         mode: 0644
+      notify:
+        - uwsgi restarted
 
     - name: "deploy general process metrics NGINX configuration"
       copy:

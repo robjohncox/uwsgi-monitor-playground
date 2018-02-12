@@ -1,15 +1,13 @@
-global:
-
+# The root route with all parameters, which are inherited by the child
+# routes if they are not overwritten.
 route:
-  group_by: ['alertname', 'cluster']
+  receiver: 'the-receiver'
   group_wait: 30s
   group_interval: 5m
-  repeat_interval: 3h
-  continue: true
-  receiver: 'default-pager'
-
+  repeat_interval: 4h
+  group_by: [alertname]
 
 receivers:
-  - name: 'default-pager'
-    pagerduty_configs:
-    - service_key: <rob>
+  - name: 'the-receiver'
+    webhook_configs:
+      - url: http://localhost:8001

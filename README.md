@@ -34,6 +34,17 @@ To call the __General Process Metrics__ API:
 
     curl -X POST http://localhost:8003/metrics
 
+To make repeated HTTP calls that will trigger the `HighRequestRate` alert:
+
+    while true; do
+        curl -X POST http://localhost:8002
+        sleep 1
+    done
+
+To see a log of the alerts raised by the above:
+
+    less -n +F /tmp/input.log
+
 To run UWSGI-top for viewing UWSGI statistics
 
     pip install uwsgitop
@@ -41,4 +52,5 @@ To run UWSGI-top for viewing UWSGI statistics
     uwsgitop http://localhost:3101
     # Post RabbitMQ message app
     uwsgitop http://localhost:3102
-    
+    # General process metrics app
+    uwsgitop http://localhost:3103

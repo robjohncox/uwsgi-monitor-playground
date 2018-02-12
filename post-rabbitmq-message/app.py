@@ -32,7 +32,7 @@ def application(env, start_response):
             properties=pika.BasicProperties(delivery_mode=2),
             mandatory=True)
         start_response('200 OK', [('Content-Type', 'text/html')])
-        return 'Queue length: {}'.format(queue.method.message_count)
+        return ''
     except Exception as ex:
         start_response('500 INTERNAL SERVER ERROR', [('Content-Type', 'text/html')])
         return ex.message
