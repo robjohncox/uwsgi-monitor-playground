@@ -1,24 +1,22 @@
-# This is a prototype and it has shortcomings
-#  - Do not re-install prometheus if it already exists
-#  - Needs proper Grafana authentication (proper password not stored as plaintext)
-#  - Plenty of variable extraction that could occur
-#  - Should look at Prometheus tgroups so each metrics endpoint deploys own config
-#  - All sorts of security holes would need tightening up
-#  - Should use a database other than SQLite for Grafana
-#  - Should access each UI through reverse proxies
-#  - Configuration directories and files don't all get right owners, groups and permissions
+# This is a prototype, and a number of improvements required for production standard deployment:
+#  - Use latest versions of software, playbooks used installed old versions (we would probably
+#    want to write our own playbooks).
+#  - Hide all web interfaces behind reverse proxies, and use these to refer to each other
+#  - Do not install Prometheus, Alertmanager etc if already exists
+#  - Each Prometheus metrics endpoint should deploy it's own configuration
+#  - Prometheus data would need to be purged periodically
+#  - Grafana requires proper authentication (this uses password stored as plaintext)
+#  - Grafana requires a better database backend than SQLite
+#  - Playbook could generally be better (structured, variable extraction, proper file permissions)
+
+# THESE NEED TO BE INTEGRATED INTO RESEARCH
 #  - Could not install RabbitMQ stats exporter - requires Docker (same with Memcached)
 #  - Same with UWSGI stats exporter - this required building with go and was not straightforward
 #  - We are definitely seeing the rise of containerised small applications
 #  - Prometheus should run on each node. Alertmanager should be centralised
 #  - Alertmanager integrates with HipChat and can call APIs, could replace alerts
-#  - Node Exporter is configured in /etc/default, not /etc, weird
-#  - Node Exporter systemd plugin does not seem to work, write my own
-#  - May be old Prometheus and related SW versions
 #  - Is alertmanager callable?
 #  - Now is the time to ask the question ... what are we measuring?
-#  - These tests are on old versions, for example newer versions use yml alert rules files
-#    and the prometheus querying syntax
 #  - With the webhook, did not call API to say alert no longer firing
 
 ---

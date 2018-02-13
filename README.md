@@ -1,38 +1,22 @@
-To install the software on localhost (arguments will be passed to `ansible-playbooks`)
+To install the software on localhost
 
-    ./deploy.sh [args]
+    ./deploy.sh
 
 To view the Prometheus web UI go to
 
     http://localhost:9090
 
-To see the Prometheus endpoints
+To see the metrics exporters configured within Prometheus
 
     http://localhost:9090/targets
-
-To see the Alertmanager web UI go to
-
-    http://localhost:9093
 
 To view the Grafana web UI (user: admin, password: password) go to
 
     http://localhost:3000
 
-To view the RabbitMQ management web UI (user: admin, password: password) go to
+To see the Alertmanager web UI go to
 
-    http://localhost:15672
-    
-To call the __Hello World__ API:
-
-    curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost:8001
-
-To call the __Post RabbitMQ Message__ API:
-
-    curl -X POST http://localhost:8002
-
-To call the __General Process Metrics__ API:
-
-    curl -X POST http://localhost:8003/metrics
+    http://localhost:9093
 
 To make repeated HTTP calls that will trigger the `HighRequestRate` alert:
 
@@ -41,9 +25,25 @@ To make repeated HTTP calls that will trigger the `HighRequestRate` alert:
         sleep 1
     done
 
-To see a log of the alerts raised by the above:
+To see a log of the alerts raised by the above (note may take a minute or two to appear):
 
     less -n +F /tmp/input.log
+
+To view the RabbitMQ management web UI (user: admin, password: password) go to
+
+    http://localhost:15672
+    
+To call the __Hello World__ API:
+
+    curl -H "Content-Type: application/json" -X POST -d '{"foo":"abc","bar":"xyz"}' http://localhost:8001
+
+To call the __Post RabbitMQ Message__ API:
+
+    curl -X POST http://localhost:8002
+
+To call the __General Process Metrics__ API:
+
+    curl -X POST http://localhost:8003/metrics
 
 To run UWSGI-top for viewing UWSGI statistics
 
