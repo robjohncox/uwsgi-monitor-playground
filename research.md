@@ -1,6 +1,6 @@
-# UWSGI, Prometheus, Grafana and AlertManager
+# UWSGI, Prometheus, Grafana and Alertmanager
 
-This document summarises a research project into four technologies
+This document summarises a research project to evaluate four technologies
 
 * __UWSGI__: a web server, specifically the ease of hosting multiple lightweight applications that
   use the HTTP protocol.
@@ -8,7 +8,7 @@ This document summarises a research project into four technologies
   custom query language.
 * __Grafana__: a web based dashboard interface that integrates closely with Prometheus and enables
   creation of dashboards & re-use of ones already created and available online.
-* __AlertManager__: a general alerts handling system that integrates closely with Prometheus and
+* __Alertmanager__: a general alerts handling system that integrates closely with Prometheus and
   provides a rule based system and web UI for managing alerts.
 
 ## Running the example code
@@ -16,10 +16,14 @@ This document summarises a research project into four technologies
 To really get a feel for these systems, you should fire up the example code that was built as
 part of this research and have a play around:
 
-* Create an Ubuntu VM dev environment
+* Fire up an Ubuntu box (ideally a one-off VM, as this will install a lot of software)
 * Clone https://github.com/robjohncox/metrics-experiment
 * Run `./deploy.sh`
 * Go to `README.md` for instructions on how to use and test the various applications
+
+Please note that this example is running old versions of the software, this was what was installed
+by the playbooks sourced from Ansible Galaxy. These proved perfectly good for the purpose of this
+evaluation.
 
 ## Appraisal of individual technologies
 
@@ -36,9 +40,8 @@ It turns out to be trivial:
 * You write a function that takes in a dictionary of HTTP metadata and a function used to push
   back a response. You can get the request URI, headers and any other request data easily, do
   your thing, and then use the response function to provide a response status code and response
-  headers (including content type). Finally, you return the response content, HTML, JSON or
-  whatever.
-* A small UWSGI configuration file wires this function to the app server
+  headers (including content type). Finally, you return the response content, HTML, JSON, whatever.
+* A small UWSGI configuration file wires this function to the UWSGI app server
 * A small NGINX configuration file wires the application to an external HTTP server and port.
 
 It was quick to write applications that
@@ -50,8 +53,8 @@ These are indicative of the sort of simple apps this approach looks suited to. F
 Django WSGI integration code, it is not difficult to support more advanced cases such as streaming
 large data responses.
 
-This approach could prove valuable as we move towards having larger numbers of smaller
-applications hosted on each server, as a simple way of building small HTTP based applications
+This approach could prove valuable as we trend towards having larger numbers of smaller
+applications hosted on servers, as a simple way of building small HTTP based applications
 quickly and cleanly. For these reasons, it lends itself nicely to prototype and experimental
 applications, and applications with limited lifespans. It is also a useful technique to support
 integration with off-the-shelf software, given that current trends are towards web based software
@@ -64,10 +67,9 @@ https://prometheus.io/docs/introduction/overview/
 Prometheus is a metrics server which
 
 * Stores time series data for a number of different types of metric
-* Handles metrics collection primarily by pulling them from URLs on a server which expose those
-  metrics
-* Provides a rich query language for analysing those metrics
-* Integrates a rules engine for firing alerts to AlertManager based on those metrics
+* Handles metrics collection primarily by pulling them from URLs which expose those metrics
+* Provides a rich query language for analysing the metrics
+* Integrates a rules engine for firing alerts to Alertmanager based on those metrics
 
 This is a very well built piece of software, focused and excellent at the task at hand, clearly
 very capable in its field. The way that metrics are stored is logical, and the query language on
@@ -86,18 +88,21 @@ There are all sorts of metrics that you can gather, here are just a few examples
 * NGINX request times, latencies, response codes
 * UWSGI requests (more detailed than NGINX)
 * RabbitMQ, Memcached, Postgresql etc etc
+* Application specific metrics using hand rolled metrics exporters.
 
 Each set of metrics is added to Prometheus by configuring a metrics exporter. These are ready
-made and available for most popular software that we use, and it is also quite simple to write
+made and available for a lot of popular software packages, and it is also quite simple to write
 your own, which is important given that Google advises you need a combination of black-box and
-white-box metrics for your applications to be able to effectively monitor them. There is one
-caveat on the exporters that are already available for things like UWSGI, RabbitMQ and Memcached.
-These turned out to be quite hard to install (and in the scope of this experiment, I gave up). To
-use these we would need to either put a lot of effort into getting these working, write our own,
-or start using Docker (which seemed to be the __easy__ way to use them). As a side note, this is
-something we need to keep an eye on, although we are not convinced it is the right time to
-containerize our own software, we may find that more and more of the software packages require
-the use of containers.
+white-box metrics for your applications to be able to effectively monitor them.
+
+There is one caveat on the exporters that are already available for things like UWSGI, RabbitMQ and
+Memcached. These turned out to be quite hard to install (and in the scope of this experiment, I gave
+up). To use these you would need to either put a lot of effort into getting these working, write
+your own, or use Docker (which seemed to be the __easy__ way to use them). As a side note, this is
+something to keep an eye on, we may be moving towards a time where even if our own applications are
+not utilising containers, we may need to start using container technologies for the installation of
+other software packages, as this becomes the standard approach to packaging and distributing
+software. This does not seem like a bad thing.
 
 #### Viewing metrics
 
@@ -120,35 +125,28 @@ you provide for each one:
 * A dictionary of labels which are used to categorize alerts
 * A dictionary of annotations which provide additional information
 
-There is a fundamental difference between the way that Prometheus handles alerts, and the way
-that we currently handle alerts. CONTINUE HERE
+CONTINUE HERE talking about how alert firing works, be detailed this is important.
 
 #### Summary
 
 To summarise, Prometheus looks to be a tremendously powerful system for automating the storage
-and use of metrics. It is very flexible, and can cope with both general black-box and application
-specific white-box metrics easily, and supports both sophisticated alerting for automated
+and use of metrics. It is very flexible, can cope with both general black-box and application
+specific white-box metrics easily, supports both sophisticated alerting for automated
 monitoring and notifying people of problems, and powerful dashboards for viewing and exploring
 detailed system behaviour.
-
-TODO
- - Provision of endpoints (metrics exporters)
- - Viewing of metrics
- - Raising of alerts
 
 ### Grafana
 
 TODO
 
-### AlertManager
+### Alertmanager
 
 TODO
 
 ## General TODO
 
 * Summarise everything from site.yml
-* Talk about architecture for Prometheus, Grafana and AlertManager (what is local, central etc)
+* Talk about architecture for Prometheus, Grafana and Alertnanager (what is local, central etc)
 * Suitability of Prometheus & Grafana for business focused metrics
-* How would we be able to replace our current alerts with alertmanager? Scope out the project
-* Discuss how this can potentially be the 'support systems at scale' solution
-* Write up how to test this out, including caveats (e.g. old versions)
+* How Grafana and the off-the-shelf dashboards makes ramp-up fast and helps teach Prometheus
+  query language

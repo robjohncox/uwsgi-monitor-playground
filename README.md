@@ -1,3 +1,5 @@
+This has been tested on Ubuntu 14.04.
+
 To install the software on localhost
 
     ./deploy.sh
